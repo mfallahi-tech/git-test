@@ -1,3 +1,4 @@
 #!bash
 echo texy
-yum install top
+echo test 1
+yum update @ install htop
