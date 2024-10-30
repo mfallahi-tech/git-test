@@ -1,0 +1,41 @@
+vcl 4.0;
+
+backend server1 {
+    .host = "188.121.97.69";
+    .port = "8181";
+}
+
+backend server2 {
+    .host = "188.121.98.142";
+    .port = "80";
+}
+
+VCL_FILE="/etc/varnish/default.vcl"
+
+NEW_IP="$1"
+
+if [ -z "$NEW_IP" ]; then
+    echo "Please enter a new IP address."
+    exit 1
+fi
+
+sub vcl_deliver {
+    if (req.backend_hint == server1) {
+        set resp.http.X-Backend-Server = "server1";
+    } else if (req.backend_hint == server2) {
+        set resp.http.X-Backend-Server = "server2";
+    }
+
+    if (obj.hits > 0) {
+        set resp.http.vv-Cache = "HIT";
+    } else {
+        set resp.http.vv-Cache = "MISS";
+    }
+}
+
+read -p "Please enter the port (default: 8080): " NEW_PORT
+NEW_PORT=${NEW_PORT:-8080} # Use 8080 if the user does not enter a port
+
+if grep -q "$NEW_IP" "$VCL_FILE"; then
+    echo "IP $NEW_IP already exists in the VCL file."
+    exit 1
