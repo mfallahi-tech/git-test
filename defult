@@ -10,14 +10,18 @@ backend server2 {
     .port = "80";
 }
 
-VCL_FILE="/etc/varnish/default.vcl"
-
-NEW_IP="$1"
-
-if [ -z "$NEW_IP" ]; then
-    echo "Please enter a new IP address."
-    exit 1
-fi
+sub vcl_recv {
+    if (req.method == "GET" || req.method == "HEAD") {
+        if (req.url ~ "^/api/") {
+            set req.backend_hint = server1;
+        } else {
+            set req.backend_hint = server2;
+        }
+        return (hash);
+    } else {
+        return (pass);
+    }
+}
 
 sub vcl_deliver {
     if (req.backend_hint == server1) {
@@ -33,9 +37,3 @@ sub vcl_deliver {
     }
 }
 
-read -p "Please enter the port (default: 8080): " NEW_PORT
-NEW_PORT=${NEW_PORT:-8080} # Use 8080 if the user does not enter a port
-
-if grep -q "$NEW_IP" "$VCL_FILE"; then
-    echo "IP $NEW_IP already exists in the VCL file."
-    exit 1
