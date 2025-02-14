@@ -5,17 +5,12 @@ backend server1 {
     .port = "8181";
 }
 
+        set resp.http.X-Backend-Server = "server1";
+    } else if (req.backend_hint == server2) {
+        set resp.http.X-Backend-Server = "server2";
 backend server2 {
     .host = "188.121.98.142";
     .port = "80";
-}
-
-sub vcl_recv {
-    if (req.method == "GET" || req.method == "HEAD") {
-        if (req.url ~ "^/api/") {
-            set req.backend_hint = server1;
-        } else {
-            set req.backend_hint = server2;
         }
         return (hash);
     } else {
